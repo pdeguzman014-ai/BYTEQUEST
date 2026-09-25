@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BYTEQUEST</title>
+<style>
+  :root{
+    --board-cream:#E8EDD8;
+    --board-line:#5C7A4A;
+    --tile-a:#EEF2E0;
+    --tile-b:#D3DFB8;
+    --ladder-green:#3E7D4E;
+    --snake-red:#1F5C3A;
+    --ink:#1E2B1A;
+    --p1:#D4A017;
+    --p2:#8B5A2B;
+    --gold:#7FA650;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Georgia', 'Times New Roman', serif;
+    background: radial-gradient(circle at 30% 20%, #1e2e18 0%, #10190d 60%, #0a0f07 100%);
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .app{
+    display:flex;
+    gap:28px;
+    flex-wrap:wrap;
+    align-items:flex-start;
+    justify-content:center;
+    max-width:980px;
+  }
+  .title{
+    font-family: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+    font-weight:700;
+    letter-spacing:1px;
+    color:#A8D08D;
+    text-align:center;
+    margin:0 0 14px 0;
+    font-size:28px;
+    text-shadow: 0 1px 0 rgba(0,0,0,.6);
+  }
+  .title small{
+    display:block;
+    font-size:12px;
+    letter-spacing:4px;
+    color:#7FA46A;
+    font-weight:400;
+    margin-top:4px;
+    text-transform:uppercase;
+  }
+  .board-wrap{
+    background: linear-gradient(160deg,#3A5A2C,#22381A);
+    padding:14px;
+    border-radius:10px;
+    animation: borderGlow 3s ease-in-out infinite;
+  }
+  @keyframes borderGlow{
+    0%,100%{ box-shadow: 0 12px 40px rgba(0,0,0,.6), inset 0 0 0 2px #7FA650, 0 0 0px rgba(127,166,80,0); }
+    50%{ box-shadow: 0 12px 40px rgba(0,0,0,.6), inset 0 0 0 2px #A8D08D, 0 0 22px rgba(168,208,141,.55); }
+  }
+  #board{
+    display:grid;
+    grid-template-columns: repeat(10, 48px);
+    grid-template-rows: repeat(10, 48px);
+    background: var(--board-cream);
+    border-radius:4px;
+    overflow:hidden;
+    position:relative;
+  }
+  .cell{
+    position:relative;
+    display:flex;
+    align-items:flex-start;
+    justify-content:flex-end;
+    padding:3px 4px;
+    font-size:10px;
+    color:#8a7a5c;
+    font-weight:600;
+  }
+  .cell.a{background:var(--tile-a);}
+  .cell.b{background:var(--tile-b);}
+  .cell.win{background:#e5c98e;}
+  svg#overlay{
+    position:absolute;
+    top:0; left:0;
+    pointer-events:none;
+  }
+  .token{
+    position:absolute;
+    width:22px;
+    height:22px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:16px;
+    line-height:1;
+    border-radius:50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,.4);
+    transition: left .4s ease, top .4s ease;
+    z-index:5;
+  }
+  .token.p1{background:var(--p1); border:2px solid #7a2e15;}
+  .token.p2{background:var(--p2); border:2px solid #163a5c;}
+
+  .panel{
+    width:260px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .card{
+    background:#F3F5E9;
+    border-radius:8px;
+    padding:16px 18px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  }
+  .turn-label{
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:#6B8256;
+    margin-bottom:6px;
+  }
+  .turn-name{
+    font-size:20px;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .dot{width:14px;height:14px;border-radius:50%;display:inline-block;}
+  .dot.p1{background:var(--p1);}
+  .dot.p2{background:var(--p2);}
+
+  .quiz-box{
+    margin-top:14px;
+    background:#EFF4E2;
+    border:1px solid #B9CE9C;
+    border-radius:8px;
+    padding:14px;
+  }
+  .category-box{
+    margin-top:14px;
+    background:#EFF4E2;
+    border:1px solid #B9CE9C;
+    border-radius:8px;
+    padding:14px;
+  }
+  .category-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:8px;
+  }
+  .categoryBtn{
+    padding:12px 8px;
+    border:none;
+    border-radius:6px;
+    background: linear-gradient(180deg, #7FA650, #4C7A32);
+    color:#fff;
+    font-weight:700;
+    font-family:inherit;
+    font-size:13px;
+    letter-spacing:0.5px;
+    cursor:pointer;
+    box-shadow: 0 3px 8px rgba(0,0,0,.25);
+    transition: transform .1s ease;
+  }
+  .categoryBtn:hover{transform: translateY(-1px);}
+  .quiz-label{
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:#6B8256;
+    margin-bottom:6px;
+    display:flex;
+    justify-content:space-between;
+  }
+  .timer-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:10px;
+  }
+  #timerText{
+    font-size:13px;
+    font-weight:700;
+    color:#3E6B2C;
+    min-width:34px;
+  }
+  #timerText.urgent{color:#B5432E;}
+  .timer-track{
+    flex:1;
+    height:8px;
+    background:#DCE6C8;
+    border-radius:4px;
+    overflow:hidden;
+  }
+  #timerFill{
+    height:100%;
+    width:100%;
+    background: linear-gradient(90deg, #6FA24B, #3E6B2C);
+    border-radius:4px;
+    transition: width 0.1s linear, background 0.2s ease;
+  }
+  #timerFill.urgent{
+    background: linear-gradient(90deg, #D9503A, #B5432E);
+  }
+  #question{
+    font-size:17px;
+    font-weight:700;
+    color:var(--ink);
+    margin-bottom:12px;
+    letter-spacing:0.2px;
+    line-height:1.35;
+  }
+  .choices{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .choiceBtn{
+    padding:10px 12px;
+    border:none;
+    border-radius:6px;
+    background: linear-gradient(180deg, #6FA24B, #3E6B2C);
+    color:#fff;
+    font-weight:600;
+    font-family:inherit;
+    font-size:13px;
+    line-height:1.3;
+    text-align:left;
+    cursor:pointer;
+    box-shadow: 0 3px 8px rgba(0,0,0,.25);
+    transition: transform .1s ease, opacity .15s ease;
+  }
+  .choiceBtn:hover:not(:disabled){transform: translateY(-1px);}
+  .choiceBtn:disabled{opacity:.4; cursor:not-allowed;}
+  .choiceBtn.correct{background: linear-gradient(180deg, #4C9A5E, #2E6B3E);}
+  .choiceBtn.wrong{background: linear-gradient(180deg, #B5432E, #7C2A1B);}
+  #startRoundBtn{
+    width:100%;
+    margin-top:6px;
+    padding:12px 10px;
+    border:none;
+    border-radius:8px;
+    background: linear-gradient(180deg, #6FA24B, #3E6B2C);
+    color:#fff;
+    font-weight:700;
+    font-family:inherit;
+    font-size:15px;
+    letter-spacing:1px;
+    cursor:pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,.3);
+  }
+  #startRoundBtn:disabled{opacity:.5; cursor:not-allowed;}
+
+  #message{
+    margin-top:12px;
+    font-size:13px;
+    color:#4E6B3E;
+    min-height:36px;
+    line-height:1.4;
+  }
+  .legend{
+    font-size:12px;
+    color:#4E6B3E;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .legend span.sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;}
+  #resetBtn{
+    margin-top:4px;
+    background:none;
+    border:1px solid #9BB57E;
+    color:#4E6B3E;
+    padding:8px;
+    border-radius:6px;
+    font-family:inherit;
+    cursor:pointer;
+    font-size:12px;
+    letter-spacing:1px;
+  }
+  #resetBtn:hover{background:#E2EAD0;}
+
+  .score-card{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .score-item{
+    text-align:center;
+    flex:1;
+  }
+  .score-item .score-label{
+    font-size:10px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:#6B8256;
+    margin-bottom:2px;
+  }
+  .score-item .score-value{
+    font-size:22px;
+    font-weight:700;
+  }
+  .score-value.p1{color:var(--p1);}
+  .score-value.p2{color:var(--p2);}
+  .score-vs{
+    font-size:11px;
+    color:#93A87C;
+    padding:0 6px;
+  }
+  #resetScoresBtn{
+    margin-top:10px;
+    width:100%;
+    background:none;
+    border:1px solid #9BB57E;
+    color:#4E6B3E;
+    padding:6px;
+    border-radius:6px;
+    font-family:inherit;
+    cursor:pointer;
+    font-size:11px;
+    letter-spacing:1px;
+  }
+  #resetScoresBtn:hover{background:#E2EAD0;}
+  #muteBtn{
+    margin-top:4px;
+    background:none;
+    border:1px solid #9BB57E;
+    color:#4E6B3E;
+    padding:8px;
+    border-radius:6px;
+    font-family:inherit;
+    cursor:pointer;
+    font-size:12px;
+    letter-spacing:1px;
+    width:100%;
+  }
+  #muteBtn:hover{background:#E2EAD0;}
+
+
+  .snake-belly{
+    stroke-dashoffset: 0;
+    animation: slither 1.1s linear infinite;
+  }
+  @keyframes slither{
+    to{ stroke-dashoffset: -16; }
+  }
+  .snake-tongue{
+    transform-box: fill-box;
+    transform-origin: center top;
+    animation: flick 1.6s ease-in-out infinite;
+  }
+  @keyframes flick{
+    0%,60%,100%{ transform: scaleY(1); opacity:1; }
+    70%{ transform: scaleY(1.6); opacity:1; }
+    80%{ transform: scaleY(1); opacity:0; }
+    90%{ transform: scaleY(1.6); opacity:1; }
+  }
+  .winner-banner{
+    display:none;
+    text-align:center;
+    font-size:16px;
+    font-weight:700;
+    color:#2E4A22;
+    padding:10px;
+    background:#D6E8BE;
+    border-radius:6px;
+    margin-top:10px;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div>
+    <div class="title">BYTEQUEST<small>answer right, move forward</small></div>
+    <div class="board-wrap">
+      <div id="board"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="card score-card">
+      <div class="score-item">
+        <div class="score-label">Player 1</div>
+        <div class="score-value p1" id="scoreP1">0</div>
+      </div>
+      <div class="score-vs">WINS</div>
+      <div class="score-item">
+        <div class="score-label">Player 2</div>
+        <div class="score-value p2" id="scoreP2">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="turn-label">Current turn</div>
+      <div class="turn-name"><span class="dot p1" id="turnDot"></span><span id="turnName">Player 1</span></div>
+      <button id="startRoundBtn">Choose Category</button>
+      <div class="category-box" id="categoryBox" style="display:none;">
+        <div class="quiz-label"><span>Pick a category</span></div>
+        <div class="category-grid" id="categoryGrid"></div>
+      </div>
+      <div class="quiz-box" id="quizBox" style="display:none;">
+        <div class="quiz-label"><span id="quizCategoryLabel">Answer to move</span><span id="quizReward"></span></div>
+        <div class="timer-row">
+          <span id="timerText">10.0s</span>
+          <div class="timer-track"><div id="timerFill"></div></div>
+        </div>
+        <div id="question">2 + 2 = ?</div>
+        <div class="choices" id="choices"></div>
+      </div>
+      <div id="message">Answer correctly to move forward. Wrong answer, and you stay put! First to square 100 wins.</div>
+      <div class="winner-banner" id="winnerBanner"></div>
+      <button id="resetBtn">Reset Game</button>
+      <button id="resetScoresBtn">Reset Scores</button>
+      <button id="muteBtn" title="Toggle sound">🔊 Sound On</button>
+    </div>
+
+    <div class="card legend">
+      <div><span class="sw" style="background:var(--ladder-green)"></span>Ladders climb you up</div>
+      <div><span class="sw" style="background:var(--snake-red)"></span>Snakes slide you down</div>
+      <div>✅ Correct answer moves you 1–6 squares</div>
+      <div>❌ Wrong answer skips your turn</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- Config ----
+const SIZE = 10; // 10x10 board
+const CELL = 48;
+
+// ---- Sound FX engine (synthesized via Web Audio API — no external files) ----
+const SoundFX = (() => {
+  let ctx = null;
+  let muted = false;
+  function ensureCtx(){
+    if (!ctx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      ctx = new AC();
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+
+  function tone(freq, start, dur, {type='sine', gain=0.2, glideTo=null, delay=0} = {}){
+    if (muted) return;
+    const c = ensureCtx();
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, start + delay);
+    if (glideTo !== null){
+      osc.frequency.exponentialRampToValueAtTime(glideTo, start + delay + dur);
+    }
+    g.gain.setValueAtTime(0, start + delay);
+    g.gain.linearRampToValueAtTime(gain, start + delay + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, start + delay + dur);
+    osc.connect(g).connect(c.destination);
+    osc.start(start + delay);
+    osc.stop(start + delay + dur + 0.02);
+  }
+
+  function noiseBurst(start, dur, {gain=0.15, filterFreq=1200, delay=0} = {}){
+    if (muted) return;
+    const c = ensureCtx();
+    const bufferSize = Math.floor(c.sampleRate * dur);
+    const buffer = c.createBuffer(1, bufferSize, c.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++){
+      data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize); // decaying noise
+    }
+    const src = c.createBufferSource();
+    src.buffer = buffer;
+    const filter = c.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = filterFreq;
+    filter.Q.value = 0.7;
+    const g = c.createGain();
+    g.gain.setValueAtTime(gain, start + delay);
+    g.gain.exponentialRampToValueAtTime(0.001, start + delay + dur);
+    src.connect(filter).connect(g).connect(c.destination);
+    src.start(start + delay);
+  }
+
+  function wobble(points, start, {type='sawtooth', gain=0.2, delay=0} = {}){
+    // points: array of [timeOffset, freq] pairs describing a pitch wobble curve
+    if (muted) return;
+    const c = ensureCtx();
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = type;
+    const t0 = start + delay;
+    osc.frequency.setValueAtTime(points[0][1], t0);
+    for (let i = 1; i < points.length; i++){
+      osc.frequency.linearRampToValueAtTime(points[i][1], t0 + points[i][0]);
+    }
+    const totalDur = points[points.length-1][0];
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(gain, t0 + 0.02);
+    g.gain.setValueAtTime(gain, t0 + totalDur * 0.7);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + totalDur);
+    osc.connect(g).connect(c.destination);
+    osc.start(t0);
+    osc.stop(t0 + totalDur + 0.02);
+  }
+
+  return {
+    setMuted(v){ muted = v; },
+    isMuted(){ return muted; },
+    correct(){
+      const c = ensureCtx();
+      const t = c.currentTime;
+      // "paldo" — playful bouncy 3-note bling
+      tone(523.25, t, 0.13, { type:'square', gain:0.16, delay:0 });     // C5
+      tone(659.25, t, 0.13, { type:'square', gain:0.16, delay:0.09 });  // E5
+      tone(1046.5, t, 0.30, { type:'triangle', gain:0.24, delay:0.18 }); // C6 bling
+    },
+    wrong(){
+      const c = ensureCtx();
+      const t = c.currentTime;
+      // "bleh" — comedic wobbly raspberry groan
+      wobble([[0,300],[0.08,180],[0.16,260],[0.24,140],[0.34,90]], t, { type:'sawtooth', gain:0.22 });
+    },
+    ladder(){
+      const c = ensureCtx();
+      const t = c.currentTime;
+      // rising whoosh sweep
+      tone(200, t, 0.5, { type:'sine', gain:0.16, glideTo:900 });
+      tone(300, t, 0.5, { type:'triangle', gain:0.08, glideTo:1200, delay:0.05 });
+    },
+    snake(){
+      const c = ensureCtx();
+      const t = c.currentTime;
+      // hiss (filtered noise) + a low descending groan
+      noiseBurst(t, 0.55, { gain:0.20, filterFreq:3500 });
+      tone(180, t, 0.45, { type:'sawtooth', gain:0.12, glideTo:70 });
+    },
+    victory(){
+      const c = ensureCtx();
+      const t = c.currentTime;
+      // short ascending fanfare jingle
+      const notes = [523.25, 659.25, 783.99, 1046.5]; // C5 E5 G5 C6
+      notes.forEach((f, i) => {
+        tone(f, t, 0.28, { type:'triangle', gain:0.22, delay: i*0.14 });
+      });
+      // final sustained chord-ish tail
+      tone(1046.5, t, 0.5, { type:'sine', gain:0.14, delay:0.56 });
+    }
+  };
+})();
+
+const ladders = { 3:38, 8:30, 28:84, 58:77, 75:86, 24:56, 51:67 };
+const snakes  = { 97:78, 92:51, 87:36, 62:19, 54:34, 64:60, 17:7 };
+
+// ---- Board coordinate helpers ----
+// Squares numbered 1..100, boustrophedon (snake) layout,
+// square 1 bottom-left, moves right, then up-left, etc.
+function squareToRowCol(n){
+  const idx = n - 1;
+  const row = Math.floor(idx / SIZE); // 0 = bottom row
+  let col = idx % SIZE;
+  if (row % 2 === 1) col = SIZE - 1 - col; // reverse odd rows
+  const gridRow = SIZE - 1 - row; // convert to top-down grid row
+  return { gridRow, col };
+}
+function squareToXY(n){
+  const {gridRow, col} = squareToRowCol(n);
+  return { x: col * CELL + CELL/2, y: gridRow * CELL + CELL/2 };
+}
+
+// ---- Build board ----
+const boardEl = document.getElementById('board');
+boardEl.style.width = (SIZE*CELL)+'px';
+boardEl.style.height = (SIZE*CELL)+'px';
+
+for (let n = 1; n <= 100; n++){
+  const {gridRow, col} = squareToRowCol(n);
+  const cell = document.createElement('div');
+  cell.className = 'cell ' + (((gridRow+col)%2===0) ? 'a':'b') + (n===100?' win':'');
+  cell.style.gridRowStart = gridRow+1;
+  cell.style.gridColumnStart = col+1;
+  cell.textContent = n;
+  boardEl.appendChild(cell);
+}
+
+// SVG overlay for ladders/snakes
+const svgNS = "http://www.w3.org/2000/svg";
+const svg = document.createElementNS(svgNS, "svg");
+svg.setAttribute("id","overlay");
+svg.setAttribute("width", SIZE*CELL);
+svg.setAttribute("height", SIZE*CELL);
+boardEl.appendChild(svg);
+
+function drawConnector(fromN, toN, color, isLadder){
+  const a = squareToXY(fromN);
+  const b = squareToXY(toN);
+  if (isLadder){
+    // draw as double rail with rungs
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const len = Math.sqrt(dx*dx+dy*dy);
+    const nx = -dy/len, ny = dx/len; // normal
+    const offset = 5;
+    const rail1a = {x:a.x+nx*offset, y:a.y+ny*offset};
+    const rail1b = {x:b.x+nx*offset, y:b.y+ny*offset};
+    const rail2a = {x:a.x-nx*offset, y:a.y-ny*offset};
+    const rail2b = {x:b.x-nx*offset, y:b.y-ny*offset};
+    [ [rail1a,rail1b], [rail2a,rail2b] ].forEach(([p1,p2])=>{
+      const line = document.createElementNS(svgNS,"line");
+      line.setAttribute("x1",p1.x); line.setAttribute("y1",p1.y);
+      line.setAttribute("x2",p2.x); line.setAttribute("y2",p2.y);
+      line.setAttribute("stroke", color);
+      line.setAttribute("stroke-width", 3);
+      line.setAttribute("stroke-linecap","round");
+      svg.appendChild(line);
+    });
+    const rungs = 6;
+    for(let i=1;i<rungs;i++){
+      const t = i/rungs;
+      const p1 = {x: rail1a.x+(rail1b.x-rail1a.x)*t, y: rail1a.y+(rail1b.y-rail1a.y)*t};
+      const p2 = {x: rail2a.x+(rail2b.x-rail2a.x)*t, y: rail2a.y+(rail2b.y-rail2a.y)*t};
+      const rung = document.createElementNS(svgNS,"line");
+      rung.setAttribute("x1",p1.x); rung.setAttribute("y1",p1.y);
+      rung.setAttribute("x2",p2.x); rung.setAttribute("y2",p2.y);
+      rung.setAttribute("stroke", color);
+      rung.setAttribute("stroke-width", 2);
+      svg.appendChild(rung);
+    }
+  } else {
+    // snake: wavy multi-curve body from head (fromN, higher square) down to tail (toN)
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const dist = Math.sqrt(dx*dx+dy*dy);
+    const nx = -dy/dist, ny = dx/dist; // normal to the line
+    const segments = 4;
+    let d = `M ${a.x} ${a.y} `;
+    let prevX = a.x, prevY = a.y;
+    for (let i = 1; i <= segments; i++){
+      const t = i/segments;
+      const baseX = a.x + dx*t;
+      const baseY = a.y + dy*t;
+      const wobble = (i % 2 === 0 ? 1 : -1) * 14;
+      const ctrlX = baseX + nx*wobble;
+      const ctrlY = baseY + ny*wobble;
+      d += `Q ${ctrlX} ${ctrlY} ${baseX} ${baseY} `;
+    }
+    // body (darker outline)
+    const bodyPath = document.createElementNS(svgNS,"path");
+    bodyPath.setAttribute("d", d);
+    bodyPath.setAttribute("stroke", color);
+    bodyPath.setAttribute("stroke-width", 8);
+    bodyPath.setAttribute("fill","none");
+    bodyPath.setAttribute("stroke-linecap","round");
+    svg.appendChild(bodyPath);
+    // belly stripe (lighter center line for scale texture)
+    const bellyPath = document.createElementNS(svgNS,"path");
+    bellyPath.setAttribute("d", d);
+    bellyPath.setAttribute("stroke", "#A8D08D");
+    bellyPath.setAttribute("stroke-width", 2.5);
+    bellyPath.setAttribute("fill","none");
+    bellyPath.setAttribute("stroke-linecap","round");
+    bellyPath.setAttribute("stroke-dasharray", "3,5");
+    bellyPath.setAttribute("opacity", "0.8");
+    bellyPath.setAttribute("class", "snake-belly");
+    svg.appendChild(bellyPath);
+
+    // head (triangular-ish, bigger circle) at the start (fromN = higher square = where you land)
+    const head = document.createElementNS(svgNS,"circle");
+    head.setAttribute("cx", a.x); head.setAttribute("cy", a.y);
+    head.setAttribute("r", 8);
+    head.setAttribute("fill", color);
+    head.setAttribute("stroke", "#0F3320");
+    head.setAttribute("stroke-width", 1.5);
+    svg.appendChild(head);
+
+    // eyes
+    [-3, 3].forEach(offset => {
+      const eye = document.createElementNS(svgNS,"circle");
+      eye.setAttribute("cx", a.x + offset); eye.setAttribute("cy", a.y - 2);
+      eye.setAttribute("r", 1.3);
+      eye.setAttribute("fill", "#FFE8A3");
+      svg.appendChild(eye);
+    });
+
+    // forked tongue
+    const tongue = document.createElementNS(svgNS,"path");
+    const tdx = (a.x - prevX) || (a.x - b.x);
+    tongue.setAttribute("d", `M ${a.x} ${a.y-8} l -2 -5 M ${a.x} ${a.y-8} l 2 -5`);
+    tongue.setAttribute("stroke", "#C0392B");
+    tongue.setAttribute("stroke-width", 1);
+    tongue.setAttribute("fill", "none");
+    tongue.setAttribute("class", "snake-tongue");
+    svg.appendChild(tongue);
+  }
+}
+
+Object.entries(ladders).forEach(([from,to]) => drawConnector(+from, +to, getComputedStyle(document.documentElement).getPropertyValue('--ladder-green'), true));
+Object.entries(snakes).forEach(([from,to]) => drawConnector(+from, +to, getComputedStyle(document.documentElement).getPropertyValue('--snake-red'), false));
+
+// ---- Tokens ----
+const token1 = document.createElement('div');
+token1.className = 'token p1';
+token1.textContent = '🧑';
+const token2 = document.createElement('div');
+token2.className = 'token p2';
+token2.textContent = '👩';
+boardEl.appendChild(token1);
+boardEl.appendChild(token2);
+
+const state = {
+  positions: [0, 0], // 0 = off board (before square 1)
+  current: 0, // index 0 or 1
+  gameOver: false
+};
+
+// ---- Score tracking across games (persists via localStorage) ----
+const SCORE_KEY = 'snakesLaddersScores';
+function loadScores(){
+  try{
+    const raw = localStorage.getItem(SCORE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e){}
+  return [0, 0];
+}
+let scores = loadScores();
+function saveScores(){
+  try{ localStorage.setItem(SCORE_KEY, JSON.stringify(scores)); } catch(e){}
+}
+const scoreP1El = document.getElementById('scoreP1');
+const scoreP2El = document.getElementById('scoreP2');
+function updateScoreUI(){
+  scoreP1El.textContent = scores[0];
+  scoreP2El.textContent = scores[1];
+}
+updateScoreUI();
+
+function placeToken(el, n, offsetX, offsetY){
+  const pos = n <= 0 ? squareToXY(1) : squareToXY(Math.min(n,100));
+  el.style.left = (pos.x - 8 + offsetX) + 'px';
+  el.style.top = (pos.y - 8 + offsetY) + 'px';
+}
+placeToken(token1, 0, -6, 6);
+placeToken(token2, 0, 6, 6);
+
+// ---- Game Dev Trivia Quiz Engine ----
+const startRoundBtn = document.getElementById('startRoundBtn');
+const quizBox = document.getElementById('quizBox');
+const questionEl = document.getElementById('question');
+const choicesEl = document.getElementById('choices');
+const quizReward = document.getElementById('quizReward');
+const messageEl = document.getElementById('message');
+const turnName = document.getElementById('turnName');
+const turnDot = document.getElementById('turnDot');
+const winnerBanner = document.getElementById('winnerBanner');
+
+const names = ['Player 1', 'Player 2'];
+
+function updateTurnUI(){
+  turnName.textContent = names[state.current];
+  turnDot.className = 'dot ' + (state.current===0 ? 'p1':'p2');
+}
+
+// Game development trivia bank, grouped by difficulty tier.
+// Each question: text + correct answer + 3 distractors.
+const questionBank = {
+  1: [ // easy — squares 1-30, general/basic concepts
+    { q: "What does 'FPS' stand for in gaming?", correct: "Frames Per Second", wrong: ["Fast Player System", "Full Pixel Scan", "Frame Position Sync"], category: "General" },
+    { q: "What does 'NPC' stand for?", correct: "Non-Player Character", wrong: ["New Player Class", "Network Protocol Client", "Non-Physical Character"], category: "General" },
+    { q: "Which engine is developed by Epic Games?", correct: "Unreal Engine", wrong: ["Unity", "Godot", "CryEngine"], category: "General" },
+    { q: "Which company created the game engine Godot?", correct: "An open-source community", wrong: ["Microsoft", "Sony", "Valve"], category: "General" },
+    { q: "What does 'RPG' stand for?", correct: "Role-Playing Game", wrong: ["Rapid Player Growth", "Real Player Graphics", "Random Puzzle Generator"], category: "General" },
+    { q: "What does 'HP' stand for in games?", correct: "Health Points", wrong: ["High Performance", "Hit Priority", "Hero Power"], category: "General" },
+    { q: "What is a 'checkpoint' in a game?", correct: "A save point during a level", wrong: ["A type of weapon", "A multiplayer mode", "A loading screen"], category: "General" },
+    { q: "What does 'PvP' mean?", correct: "Player versus Player", wrong: ["Point versus Point", "Play versus Practice", "Power versus Power"], category: "General" },
+
+    { q: "Which language is most associated with Unity scripting?", correct: "C#", wrong: ["Python", "Ruby", "Swift"], category: "Programming" },
+    { q: "What is a 'game loop'?", correct: "The core cycle that updates and renders the game", wrong: ["A type of level design", "A multiplayer connection method", "A sound looping tool"], category: "Programming" },
+    { q: "What is a 'variable' used for in code?", correct: "Storing a value that can change", wrong: ["Rendering graphics", "Playing sound", "Saving files only"], category: "Programming" },
+    { q: "What does 'debugging' mean?", correct: "Finding and fixing errors in code", wrong: ["Adding new graphics", "Compressing audio", "Publishing a game"], category: "Programming" },
+    { q: "What is a 'function' in programming?", correct: "A reusable block of code", wrong: ["A type of texture", "A save file", "A sound effect"], category: "Programming" },
+    { q: "What does a 'loop' do in code?", correct: "Repeats a block of instructions", wrong: ["Renders a 3D model", "Mixes audio tracks", "Compresses a save file"], category: "Programming" },
+    { q: "What is 'input' in a game program?", correct: "Data from the player, like keys or clicks", wrong: ["Game music", "Save file size", "Screen resolution"], category: "Programming" },
+    { q: "What is a 'boolean' value?", correct: "A true or false value", wrong: ["A type of sprite", "A sound frequency", "A 3D model"], category: "Programming" },
+
+    { q: "What is a 'sprite' in 2D game development?", correct: "A 2D image or animation used in a game", wrong: ["A type of game engine", "A sound effect file", "A physics collider"], category: "Design" },
+    { q: "What file type is commonly used for 3D models?", correct: ".fbx", wrong: [".mp3", ".exe", ".csv"], category: "Design" },
+    { q: "What does 'UI' stand for in game design?", correct: "User Interface", wrong: ["Unique Identifier", "Universal Input", "Unit Interaction"], category: "Design" },
+    { q: "What is 'level design'?", correct: "Planning and building the layout of a game level", wrong: ["Writing game code", "Mixing sound effects", "Testing network speed"], category: "Design" },
+    { q: "What does 'game asset' refer to?", correct: "Any resource used in a game, like art or sound", wrong: ["A save file only", "A type of bug", "A network protocol"], category: "Design" },
+    { q: "What is a 'texture' in games?", correct: "An image applied to a 3D model's surface", wrong: ["A sound effect", "A save file", "A type of code"], category: "Design" },
+    { q: "What does 'concept art' show?", correct: "Early visual ideas for a game's look", wrong: ["Finished game code", "Marketing budget", "Server data"], category: "Design" },
+    { q: "What is a 'color palette' in game design?", correct: "A set of chosen colors used consistently in a game", wrong: ["A type of save file", "A sound mixing tool", "A gameplay mechanic"], category: "Design" },
+
+    { q: "What does 'SFX' stand for?", correct: "Sound Effects", wrong: ["Sound Frequency Extension", "Standard Effect Xchange", "Sample Fix"], category: "Audio" },
+    { q: "Which file format is common for game audio?", correct: ".wav", wrong: [".exe", ".fbx", ".ttf"], category: "Audio" },
+    { q: "What is 'background music' in games often called?", correct: "BGM", wrong: ["SFX", "UI", "HP"], category: "Audio" },
+    { q: "What does a sound effect add to a game?", correct: "Audio feedback to actions or events", wrong: ["3D model rendering", "Save data storage", "Texture compression"], category: "Audio" },
+    { q: "What is 'voice acting' used for?", correct: "Giving characters spoken dialogue", wrong: ["Rendering shadows", "Optimizing code", "Compressing textures"], category: "Audio" },
+    { q: "What does 'volume' control in audio?", correct: "How loud a sound is", wrong: ["How fast a sound plays", "The pitch of a sound", "The file size"], category: "Audio" },
+    { q: "What is an 'audio cue'?", correct: "A sound that signals something happened", wrong: ["A type of shader", "A save checkpoint", "A network packet"], category: "Audio" },
+    { q: "What does 'looping audio' mean?", correct: "A sound that repeats continuously", wrong: ["A sound that plays once", "A muted sound", "A compressed sound file"], category: "Audio" },
+    { q: "What does 'XP' stand for?", correct: "Experience Points", wrong: ["Extra Powers", "Extended Play", "Xtra Points"], category: "General" },
+    { q: "What is a 'sandbox' game?", correct: "A game with open, free-form exploration", wrong: ["A game with only puzzles", "A racing game genre", "A type of save file"], category: "General" },
+    { q: "What does 'co-op' mean?", correct: "Cooperative play, working together", wrong: ["Competing against each other", "A save file type", "A rendering mode"], category: "General" },
+    { q: "What is a 'boss fight'?", correct: "A battle against a powerful major enemy", wrong: ["A tutorial level", "A save point", "A loading screen"], category: "General" },
+    { q: "What does 'respawn' mean?", correct: "Reappearing in the game after being defeated", wrong: ["Saving progress", "Restarting the whole game", "Changing difficulty"], category: "General" },
+    { q: "What is a 'speedrun'?", correct: "Completing a game as fast as possible", wrong: ["A type of multiplayer mode", "A graphics setting", "A save file format"], category: "General" },
+    { q: "What does 'DLC' typically add?", correct: "New content after the base game's release", wrong: ["A faster processor", "A new controller", "A save file backup"], category: "General" },
+    { q: "What is a 'tutorial level' for?", correct: "Teaching players the basic controls and mechanics", wrong: ["Storing save data", "Testing network speed", "Compressing textures"], category: "General" },
+    { q: "What does 'PvE' mean?", correct: "Player versus Environment", wrong: ["Player versus Everyone", "Point versus Enemy", "Play versus Edit"], category: "General" },
+    { q: "What is an 'inventory' in games?", correct: "A system for storing items a player collects", wrong: ["A type of enemy", "A save file format", "A sound effect"], category: "General" },
+    { q: "What does 'main menu' let a player do?", correct: "Start, load, or configure the game", wrong: ["Play the final boss", "Compress files", "Mix audio"], category: "General" },
+    { q: "What is a 'genre' in gaming?", correct: "A category defining a game's style, like RPG or FPS", wrong: ["A save file", "A sound format", "A rendering method"], category: "General" },
+    { q: "What does 'array' store in code?", correct: "A collection of values", wrong: ["A single sound file", "A 3D model", "A save checkpoint"], category: "Programming" },
+    { q: "What is a 'class' in object-oriented programming?", correct: "A blueprint for creating objects", wrong: ["A save file format", "A type of texture", "A sound channel"], category: "Programming" },
+    { q: "What does 'if statement' do?", correct: "Runs code only when a condition is true", wrong: ["Plays background music", "Renders a 3D model", "Compresses a file"], category: "Programming" },
+    { q: "What is 'syntax' in programming?", correct: "The rules for how code must be written", wrong: ["A type of game genre", "A sound effect", "A 3D model format"], category: "Programming" },
+    { q: "What does 'compile' mean?", correct: "Turning source code into a runnable program", wrong: ["Saving a game file", "Playing a sound", "Drawing a sprite"], category: "Programming" },
+    { q: "What is a 'method' in code?", correct: "A function that belongs to an object or class", wrong: ["A type of texture", "A save format", "A sound channel"], category: "Programming" },
+    { q: "What does 'null' represent in code?", correct: "The absence of a value", wrong: ["A high score", "A finished level", "A save file"], category: "Programming" },
+    { q: "What is 'version control' used for?", correct: "Tracking and managing changes to code", wrong: ["Rendering graphics", "Playing sound", "Saving game progress only"], category: "Programming" },
+    { q: "What does 'framework' mean in development?", correct: "A pre-built structure of tools to build software faster", wrong: ["A sound effect library", "A 3D model format", "A save file type"], category: "Programming" },
+    { q: "What is an 'algorithm'?", correct: "A step-by-step procedure for solving a problem", wrong: ["A sound effect", "A texture map", "A save file"], category: "Programming" },
+    { q: "What does 'IDE' stand for?", correct: "Integrated Development Environment", wrong: ["Internal Data Engine", "Interactive Design Editor", "Instant Data Export"], category: "Programming" },
+    { q: "What is 'pseudocode'?", correct: "A plain-language outline of program logic", wrong: ["A compiled program", "A sound file", "A 3D render"], category: "Programming" },
+    { q: "What is a 'mockup' in game design?", correct: "A visual draft showing how something will look", wrong: ["A finished game build", "A sound file", "A save format"], category: "Design" },
+    { q: "What does 'HUD' stand for?", correct: "Heads-Up Display", wrong: ["High Usage Data", "Hidden User Data", "Hardware Update Driver"], category: "Design" },
+    { q: "What is 'pixel art'?", correct: "Art created using small individual pixels", wrong: ["A 3D rendering technique", "A sound format", "A save file type"], category: "Design" },
+    { q: "What does 'animation' add to a game?", correct: "Movement and life to characters or objects", wrong: ["Save data", "Network speed", "Code compilation"], category: "Design" },
+    { q: "What is a 'storyboard' used for?", correct: "Planning a sequence of scenes visually", wrong: ["Saving game files", "Compressing audio", "Writing code"], category: "Design" },
+    { q: "What does 'art style' define?", correct: "The visual look and feel of a game", wrong: ["The save file format", "The network speed", "The code language"], category: "Design" },
+    { q: "What is a 'prototype' in game design?", correct: "An early test version of a game idea", wrong: ["The final released game", "A save file", "A sound file"], category: "Design" },
+    { q: "What does 'world-building' involve?", correct: "Creating the setting and lore of a game", wrong: ["Writing code only", "Compressing files", "Mixing audio only"], category: "Design" },
+    { q: "What is a 'character design'?", correct: "The visual and personality concept of a game character", wrong: ["A save file structure", "A sound effect", "A network protocol"], category: "Design" },
+    { q: "What does 'iconography' mean in UI?", correct: "Using symbols to represent actions or items", wrong: ["A save file type", "A sound format", "A network setting"], category: "Design" },
+    { q: "What is 'pacing' in game design?", correct: "The rhythm and speed at which a game unfolds", wrong: ["The file size", "The number of textures", "The save format"], category: "Design" },
+    { q: "What does 'accessibility' mean in games?", correct: "Making games playable by people with different needs", wrong: ["A type of save file", "A rendering mode", "A sound format"], category: "Design" },
+    { q: "What is a 'jingle' in games?", correct: "A short catchy musical piece, often for menus", wrong: ["A type of save file", "A 3D model", "A network packet"], category: "Audio" },
+    { q: "What does 'mute' do?", correct: "Silences the audio", wrong: ["Increases volume", "Speeds up playback", "Deletes the sound file"], category: "Audio" },
+    { q: "What is a 'soundtrack'?", correct: "The collection of music used in a game", wrong: ["A type of save file", "A rendering technique", "A network protocol"], category: "Audio" },
+    { q: "What does 'pitch' refer to in sound?", correct: "How high or low a sound is", wrong: ["How loud a sound is", "The file size", "The playback speed only"], category: "Audio" },
+    { q: "What is 'audio feedback'?", correct: "Sound that responds to player actions", wrong: ["A type of save file", "A rendering method", "A network setting"], category: "Audio" },
+    { q: "What does a 'composer' do for games?", correct: "Writes original music for the game", wrong: ["Writes the game's code", "Designs 3D models", "Tests network speed"], category: "Audio" },
+    { q: "What is 'silence' used for in game audio?", correct: "Building tension or emphasizing a moment", wrong: ["Increasing frame rate", "Saving disk space only", "Compressing textures"], category: "Audio" },
+    { q: "What does 'audio channel' refer to?", correct: "A path for a specific sound source", wrong: ["A save file", "A texture map", "A network route"], category: "Audio" },
+    { q: "What is a 'theme song'?", correct: "A recurring musical piece associated with a game", wrong: ["A type of save file", "A rendering technique", "A network protocol"], category: "Audio" },
+    { q: "What does 'crossfade' do with audio?", correct: "Smoothly transitions between two sounds", wrong: ["Deletes a sound file", "Increases file size", "Adds an echo permanently"], category: "Audio" },
+    { q: "What is 'audio latency'?", correct: "The delay between an action and its sound", wrong: ["The volume of a sound", "The pitch of a sound", "The file format used"], category: "Audio" },
+    { q: "What does 'sound design' involve?", correct: "Creating and shaping audio for a game's experience", wrong: ["Writing gameplay code", "Compressing textures", "Balancing multiplayer"], category: "Audio" },
+  
+  ],
+  2: [ // medium — squares 30-70, more specific concepts
+    { q: "What does 'DLC' stand for?", correct: "Downloadable Content", wrong: ["Digital Level Creator", "Direct Line Connection", "Data Loss Compression"], category: "General" },
+    { q: "What is 'matchmaking' in multiplayer games?", correct: "Automatically pairing players for a match", wrong: ["Saving game progress", "Rendering character models", "Compressing audio files"], category: "General" },
+    { q: "What does 'patch notes' describe?", correct: "Changes and fixes made in a game update", wrong: ["Character backstories", "Sound effect lists", "Server hardware specs"], category: "General" },
+    { q: "What is an 'achievement' in gaming?", correct: "A reward for completing a specific in-game task", wrong: ["A type of save file", "A network protocol", "A rendering technique"], category: "General" },
+    { q: "What does 'early access' mean?", correct: "Playing a game before its full official release", wrong: ["A cheat code system", "A type of multiplayer mode", "A graphics setting"], category: "General" },
+    { q: "What is a 'game jam'?", correct: "A short event where developers create games quickly", wrong: ["A multiplayer tournament", "A type of save system", "A sound mixing session"], category: "General" },
+    { q: "What does 'crossplay' allow?", correct: "Playing together across different platforms", wrong: ["Saving on multiple devices", "Switching game genres", "Changing difficulty mid-game"], category: "General" },
+    { q: "What is a 'beta test'?", correct: "Testing a game before full release to find issues", wrong: ["The final release version", "A type of DLC", "A marketing trailer"], category: "General" },
+
+    { q: "What is 'hitbox' used for in games?", correct: "Detecting collisions between objects", wrong: ["Storing save data", "Rendering shadows", "Compressing textures"], category: "Programming" },
+    { q: "What does 'AI pathfinding' commonly use?", correct: "A* (A-star) algorithm", wrong: ["SQL queries", "Bezier curves only", "Fourier transforms"], category: "Programming" },
+    { q: "What does 'draw call' refer to?", correct: "An instruction telling the GPU to render an object", wrong: ["A function that saves the game", "A player input event", "A network request"], category: "Programming" },
+    { q: "What is 'game state' in programming?", correct: "The current condition/data of the game at a moment", wrong: ["The country where the game was made", "A type of animation", "A rendering pipeline"], category: "Programming" },
+    { q: "What is 'garbage collection' in game programming?", correct: "Automatic memory cleanup of unused objects", wrong: ["Deleting old save files", "Removing bugs from code", "Clearing the game cache manually"], category: "Programming" },
+    { q: "What does 'raycasting' commonly detect?", correct: "Line-of-sight or collision along a straight path", wrong: ["Sound direction", "Frame rate drops", "Texture resolution"], category: "Programming" },
+    { q: "What does 'API' stand for?", correct: "Application Programming Interface", wrong: ["Automated Player Input", "Advanced Physics Index", "Audio Playback Instruction"], category: "Programming" },
+    { q: "What is 'refactoring' code?", correct: "Restructuring code without changing its behavior", wrong: ["Deleting all comments", "Compressing game files", "Adding new levels"], category: "Programming" },
+
+    { q: "In game dev, what is a 'tilemap'?", correct: "A grid-based system for building levels from tiles", wrong: ["A save file format", "A sound mixing tool", "A type of shader"], category: "Design" },
+    { q: "What does 'procedural generation' mean?", correct: "Creating content algorithmically instead of by hand", wrong: ["Manually placing every object", "Recording gameplay footage", "Testing game bugs"], category: "Design" },
+    { q: "What is a 'shader' used for?", correct: "Controlling how surfaces are rendered/lit", wrong: ["Managing player inventory", "Storing game saves", "Handling network sync"], category: "Design" },
+    { q: "What does 'polygon count' affect?", correct: "3D model rendering performance and detail", wrong: ["Sound quality", "Save file size", "Network latency"], category: "Design" },
+    { q: "What is 'UX' short for?", correct: "User Experience", wrong: ["Unified Xtension", "Universal Export", "Unit Xchange"], category: "Design" },
+    { q: "What does 'juice' mean in game design?", correct: "Small effects that make interactions feel satisfying", wrong: ["A type of save file", "A network optimization", "A sound compression method"], category: "Design" },
+    { q: "What is 'playtesting'?", correct: "Having players try a game to gather feedback", wrong: ["Writing game code", "Compressing textures", "Mixing audio tracks"], category: "Design" },
+    { q: "What does 'game balance' refer to?", correct: "Making sure no strategy is overwhelmingly better than others", wrong: ["The frame rate of a game", "The file size of a game", "The number of levels"], category: "Design" },
+
+    { q: "What is 'audio mixing' in games?", correct: "Balancing multiple sound sources into a cohesive output", wrong: ["Compressing texture files", "Rendering 3D models", "Optimizing code performance"], category: "Audio" },
+    { q: "What does 'dynamic music' adapt to?", correct: "Real-time gameplay events or player actions", wrong: ["The player's internet speed", "The game's save file size", "The number of polygons on screen"], category: "Audio" },
+    { q: "What is 'foley' in game audio?", correct: "Custom sound effects created to match on-screen actions", wrong: ["A type of shader", "A save file format", "A network protocol"], category: "Audio" },
+    { q: "What does 'adaptive audio' respond to?", correct: "Changes in gameplay or environment", wrong: ["The player's screen resolution", "The save file size", "The number of polygons"], category: "Audio" },
+    { q: "What is an 'audio bus' used for?", correct: "Grouping and processing multiple sound channels together", wrong: ["Storing save data", "Rendering 3D models", "Compressing textures"], category: "Audio" },
+    { q: "What does 'compression' do to audio?", correct: "Reduces file size or evens out volume levels", wrong: ["Increases polygon count", "Speeds up code execution", "Improves texture resolution"], category: "Audio" },
+    { q: "What is a 'stinger' in game music?", correct: "A short musical phrase marking a specific event", wrong: ["A type of weapon sound", "A save file", "A network delay"], category: "Audio" },
+    { q: "What does 'ambient sound' provide?", correct: "Background atmosphere for a game environment", wrong: ["Player health data", "Save file compression", "Network synchronization"], category: "Audio" },
+    { q: "What does 'meta' refer to in gaming?", correct: "The current dominant strategies players use", wrong: ["A type of save file", "A rendering technique", "A network protocol"], category: "General" },
+    { q: "What is a 'season pass'?", correct: "A purchase granting access to a game's content over a period", wrong: ["A save file backup", "A type of controller", "A graphics setting"], category: "General" },
+    { q: "What does 'grinding' mean in games?", correct: "Repeating tasks to gain progress or rewards", wrong: ["Compressing files", "Rendering graphics", "Testing network speed"], category: "General" },
+    { q: "What is 'endgame content'?", correct: "Activities available after completing the main story", wrong: ["The tutorial level", "The main menu", "A save file format"], category: "General" },
+    { q: "What does 'meta progression' mean?", correct: "Permanent upgrades that persist across playthroughs", wrong: ["A temporary buff", "A save file corruption", "A network setting"], category: "General" },
+    { q: "What is a 'loot box'?", correct: "A purchasable item granting random in-game rewards", wrong: ["A save file type", "A rendering technique", "A network protocol"], category: "General" },
+    { q: "What does 'cross-save' allow?", correct: "Continuing progress across different devices", wrong: ["Playing with friends only", "Changing game genre", "Increasing frame rate"], category: "General" },
+    { q: "What is 'community management'?", correct: "Engaging with and supporting a game's player base", wrong: ["Writing game code", "Rendering 3D models", "Compressing audio"], category: "General" },
+    { q: "What does 'churn rate' measure?", correct: "How many players stop playing a game over time", wrong: ["The game's file size", "The number of levels", "The frame rate"], category: "General" },
+    { q: "What is 'localization' in games?", correct: "Adapting a game for different languages and regions", wrong: ["Compressing textures", "Rendering shadows", "Balancing difficulty only"], category: "General" },
+    { q: "What does 'F2P' stand for?", correct: "Free-to-Play", wrong: ["Fast to Play", "Full Player Pack", "Fixed Pricing Plan"], category: "General" },
+    { q: "What is a 'wiki' used for in gaming communities?", correct: "A collaboratively edited reference of game information", wrong: ["A type of save file", "A network protocol", "A rendering engine"], category: "General" },
+    { q: "What does 'multithreading' allow a program to do?", correct: "Run multiple tasks concurrently", wrong: ["Save files faster only", "Play louder sounds", "Render higher resolution textures only"], category: "Programming" },
+    { q: "What is a 'memory leak'?", correct: "Unreleased memory that builds up over time", wrong: ["A type of save corruption only", "A rendering glitch", "A network delay"], category: "Programming" },
+    { q: "What does 'serialization' do?", correct: "Converts data into a storable/transmittable format", wrong: ["Compresses audio only", "Renders 3D models", "Balances gameplay"], category: "Programming" },
+    { q: "What is 'object pooling' used for?", correct: "Reusing objects to avoid costly creation/destruction", wrong: ["Compressing textures", "Mixing audio", "Balancing multiplayer matches"], category: "Programming" },
+    { q: "What does an 'event listener' do?", correct: "Waits for and responds to a specific action or trigger", wrong: ["Renders shadows", "Compresses save files", "Mixes background music"], category: "Programming" },
+    { q: "What is 'delta time' used for?", correct: "Making movement consistent regardless of frame rate", wrong: ["Compressing audio files", "Saving player data", "Rendering textures"], category: "Programming" },
+    { q: "What does 'inheritance' mean in OOP?", correct: "A class gaining properties from a parent class", wrong: ["A type of save file", "A sound mixing method", "A network protocol"], category: "Programming" },
+    { q: "What is a 'coroutine' used for?", correct: "Running code that pauses and resumes over time", wrong: ["Compressing textures", "Mixing audio channels", "Saving game files"], category: "Programming" },
+    { q: "What does 'polymorphism' allow in code?", correct: "Objects of different types to be used interchangeably via a shared interface", wrong: ["Faster texture loading", "Better sound mixing", "Reduced file size"], category: "Programming" },
+    { q: "What is 'unit testing'?", correct: "Testing individual pieces of code in isolation", wrong: ["Testing full multiplayer servers only", "Compressing audio files", "Rendering final graphics"], category: "Programming" },
+    { q: "What does 'interpolation' do in animation code?", correct: "Smoothly transitions values between two points", wrong: ["Compresses save files", "Balances multiplayer matches", "Mixes audio tracks"], category: "Programming" },
+    { q: "What is a 'singleton' pattern used for?", correct: "Ensuring only one instance of a class exists", wrong: ["Compressing textures", "Rendering shadows", "Mixing audio"], category: "Programming" },
+    { q: "What does 'core loop' refer to in game design?", correct: "The central repeated cycle of actions a player performs", wrong: ["The game's save format", "The network protocol", "The rendering pipeline"], category: "Design" },
+    { q: "What is 'progression system' in games?", correct: "The structure of how a player grows stronger or unlocks content", wrong: ["A type of save file", "A rendering technique", "A network setting"], category: "Design" },
+    { q: "What does 'risk vs reward' balance in design?", correct: "Whether a challenge's payoff justifies its danger", wrong: ["File size versus quality", "Save speed versus accuracy", "Frame rate versus resolution"], category: "Design" },
+    { q: "What is 'environmental storytelling'?", correct: "Conveying narrative through the game world's details", wrong: ["Writing dialogue only", "Compressing textures", "Rendering shadows"], category: "Design" },
+    { q: "What does 'game economy' refer to?", correct: "The system of resources, currency, and trade in a game", wrong: ["The company's finances", "The save file structure", "The network bandwidth"], category: "Design" },
+    { q: "What is a 'difficulty curve'?", correct: "How a game's challenge increases over time", wrong: ["The frame rate over time", "The file size growth", "The save file structure"], category: "Design" },
+    { q: "What does 'player agency' mean?", correct: "The degree of meaningful choice a player has", wrong: ["The number of save slots", "The game's file size", "The rendering resolution"], category: "Design" },
+    { q: "What is 'systemic design'?", correct: "Designing interacting systems that create emergent gameplay", wrong: ["Writing fixed scripted events only", "Compressing audio", "Rendering shadows"], category: "Design" },
+    { q: "What does 'telegraphing' mean in combat design?", correct: "Signaling an attack before it happens", wrong: ["Compressing textures", "Saving game progress", "Mixing audio channels"], category: "Design" },
+    { q: "What is a 'wireframe' in UI design?", correct: "A basic layout skeleton of an interface", wrong: ["A finished art asset", "A save file", "A sound effect"], category: "Design" },
+    { q: "What does 'readability' mean in game design?", correct: "How clearly players can understand what's happening on screen", wrong: ["The game's file size", "The network speed", "The save file format"], category: "Design" },
+    { q: "What is 'scaffolding' in game design?", correct: "Gradual support that helps players learn complex mechanics", wrong: ["A type of save file", "A rendering technique", "A network protocol"], category: "Design" },
+    { q: "What does 'mastering' do to an audio track?", correct: "Finalizes and polishes the overall sound quality", wrong: ["Records the original sound", "Deletes unused files", "Compresses save data"], category: "Audio" },
+    { q: "What is 'layering' in sound design?", correct: "Combining multiple sounds to create a richer effect", wrong: ["Deleting overlapping sounds", "Reducing file size only", "Rendering visuals"], category: "Audio" },
+    { q: "What does 'audio middleware' provide?", correct: "Tools connecting game engines to complex audio systems", wrong: ["3D modeling tools", "Save file compression", "Network optimization"], category: "Audio" },
+    { q: "What is a 'leitmotif' in game music?", correct: "A recurring musical theme tied to a character or idea", wrong: ["A save file format", "A network protocol", "A rendering technique"], category: "Audio" },
+    { q: "What does 'parametric audio' respond to?", correct: "Real-time gameplay parameters like speed or health", wrong: ["Screen resolution only", "Save file size", "Network latency"], category: "Audio" },
+    { q: "What is 'EQ' short for in audio?", correct: "Equalization", wrong: ["Extended Quality", "Effect Queue", "Efficient Quantization"], category: "Audio" },
+    { q: "What does 'sound propagation' simulate?", correct: "How sound travels and changes through an environment", wrong: ["Save file transfer", "Network packet routing", "Texture streaming"], category: "Audio" },
+    { q: "What is 'wet vs dry' signal in audio?", correct: "Processed (wet) versus unprocessed (dry) sound", wrong: ["Loud versus quiet sound", "Fast versus slow playback", "Mono versus stereo only"], category: "Audio" },
+    { q: "What does 'audio streaming' allow?", correct: "Loading and playing large audio files without full preload", wrong: ["Compressing textures", "Rendering 3D models", "Saving game progress"], category: "Audio" },
+    { q: "What is a 'transition sound'?", correct: "Audio that bridges between two game states or scenes", wrong: ["Background ambiance only", "A save file type", "A network packet"], category: "Audio" },
+    { q: "What does 'binaural audio' aim to simulate?", correct: "Realistic 3D sound as heard by human ears", wrong: ["2D stereo panning only", "Save file compression", "Network latency reduction"], category: "Audio" },
+    { q: "What is 'audio budget' in game development?", correct: "The allocated resources for a game's sound content", wrong: ["The game's total sales", "The save file limit", "The network bandwidth cap"], category: "Audio" },
+  
+  ],
+  3: [ // hard — squares 70-100, deeper/technical concepts
+    { q: "What does 'netcode' generally refer to?", correct: "The code handling multiplayer network communication", wrong: ["The game's save system", "A type of texture compression", "The UI framework"], category: "General" },
+    { q: "What is 'crunch' in game development?", correct: "A period of intense overtime work before a deadline", wrong: ["A sound compression technique", "A type of level design", "A rendering optimization"], category: "General" },
+    { q: "What does a 'live service' game mean?", correct: "A game continuously updated with new content post-launch", wrong: ["A game with no internet needed", "A single-player-only game", "A game with no updates"], category: "General" },
+    { q: "What is 'scope creep' in development?", correct: "Uncontrolled growth of a project's features over time", wrong: ["A type of camera movement", "A rendering technique", "A sound mixing error"], category: "General" },
+    { q: "What does 'porting' a game mean?", correct: "Adapting a game to run on a different platform", wrong: ["Deleting unused assets", "Compressing save files", "Adding new levels only"], category: "General" },
+    { q: "What is a 'soft launch'?", correct: "Releasing a game in limited regions to test before wide release", wrong: ["A game with reduced difficulty", "A type of tutorial", "A graphics setting"], category: "General" },
+    { q: "What does 'monetization' refer to in games?", correct: "Methods used to generate revenue from a game", wrong: ["The game's file size", "The number of playable characters", "The rendering engine used"], category: "General" },
+    { q: "What is 'player retention'?", correct: "How well a game keeps players coming back over time", wrong: ["The number of polygons rendered", "The size of the save file", "The length of the intro cutscene"], category: "General" },
+
+    { q: "What is the main benefit of an 'Entity Component System' (ECS)?", correct: "Better performance through data-oriented design", wrong: ["Easier 2D sprite drawing", "Built-in multiplayer netcode", "Automatic UI generation"], category: "Programming" },
+    { q: "What does 'frame interpolation' help smooth out?", correct: "Movement between physics/render updates", wrong: ["Texture compression artifacts", "Audio latency", "Save file corruption"], category: "Programming" },
+    { q: "What does 'client-side prediction' address in multiplayer games?", correct: "Reducing perceived input lag over the network", wrong: ["Improving texture quality", "Saving disk space", "Preventing game crashes"], category: "Programming" },
+    { q: "What is a 'quaternion' commonly used for?", correct: "Representing 3D rotations without gimbal lock", wrong: ["Compressing textures", "Storing player scores", "Managing audio channels"], category: "Programming" },
+    { q: "What is 'tick rate' in a multiplayer server?", correct: "How many times per second the server updates game state", wrong: ["The game's install size", "The number of players allowed", "The graphics resolution"], category: "Programming" },
+    { q: "What does 'deterministic lockstep' help achieve?", correct: "Synchronized simulation across networked clients", wrong: ["Faster texture loading", "Better sound mixing", "Reduced polygon count"], category: "Programming" },
+    { q: "What is 'batching' used for in rendering?", correct: "Combining draw calls to improve performance", wrong: ["Saving multiple game files at once", "Grouping players into teams", "Compressing audio tracks"], category: "Programming" },
+    { q: "What does a 'navmesh' represent?", correct: "Walkable surface data used for AI pathfinding", wrong: ["A type of texture map", "A UI layout grid", "A particle effect system"], category: "Programming" },
+
+    { q: "What is 'occlusion culling' used for?", correct: "Skipping rendering of objects hidden from view", wrong: ["Compressing audio files", "Encrypting save data", "Balancing multiplayer matches"], category: "Design" },
+    { q: "What does 'LOD' (Level of Detail) optimize?", correct: "Rendering simpler models for distant objects", wrong: ["Player difficulty scaling", "Save file structure", "Network bandwidth only"], category: "Design" },
+    { q: "What does 'diegetic UI' mean?", correct: "Interface elements that exist within the game world itself", wrong: ["A UI that only appears in menus", "A type of save system", "A network protocol"], category: "Design" },
+    { q: "What is 'onboarding' in game design?", correct: "Teaching new players how to play through early gameplay", wrong: ["Compressing textures", "Optimizing network code", "Balancing multiplayer matches"], category: "Design" },
+    { q: "What does 'flow state' refer to in game design?", correct: "A state of full immersion and focus during play", wrong: ["A type of save file", "A rendering pipeline", "A network protocol"], category: "Design" },
+    { q: "What is 'affordance' in UI/UX design?", correct: "A visual cue suggesting how an object can be used", wrong: ["A type of shader", "A save file format", "A sound compression method"], category: "Design" },
+    { q: "What does 'game feel' describe?", correct: "The tactile, responsive sensation of controlling a game", wrong: ["The game's file size", "The number of levels", "The save system"], category: "Design" },
+    { q: "What is a 'skinner box' mechanic?", correct: "A reward system designed to encourage repeated behavior", wrong: ["A type of 3D model", "A rendering technique", "A network protocol"], category: "Design" },
+
+    { q: "What is 'spatial audio' used for?", correct: "Simulating directional/3D sound based on position", wrong: ["Compressing save files", "Reducing polygon count", "Improving frame interpolation"], category: "Audio" },
+    { q: "What does 'audio occlusion' simulate?", correct: "Sound being muffled by obstacles between source and listener", wrong: ["Texture streaming", "Network packet loss", "Physics collision detection"], category: "Audio" },
+    { q: "What does 'GaaS' stand for?", correct: "Games as a Service", wrong: ["Graphics and Audio System", "Game Access Server", "Global Application Suite"], category: "General" },
+    { q: "What is 'vertical slice' in development?", correct: "A polished small section representing the full game experience", wrong: ["The final complete game", "A save file format", "A network protocol"], category: "General" },
+    { q: "What does 'greybox' or 'whitebox' testing refer to in level design?", correct: "Testing level layout with simple placeholder geometry", wrong: ["Testing final art assets", "Compressing textures", "Balancing audio levels"], category: "General" },
+    { q: "What is 'day-one patch'?", correct: "An update released alongside or just after a game's launch", wrong: ["The original unpatched build", "A type of DLC", "A marketing trailer"], category: "General" },
+    { q: "What does 'sunset' mean for a game?", correct: "Ending official support and updates for a game", wrong: ["Releasing a new expansion", "Launching in a new region", "Adding new servers"], category: "General" },
+    { q: "What is 'technical debt'?", correct: "Shortcuts in code that cause future maintenance costs", wrong: ["Unpaid licensing fees", "Server hosting costs", "Marketing budget overruns"], category: "General" },
+    { q: "What does 'IP' mean in the game industry?", correct: "Intellectual Property, an owned creative franchise", wrong: ["Internet Protocol only", "Install Package", "Interactive Platform"], category: "General" },
+    { q: "What is a 'certification pass' for console games?", correct: "A platform holder's required quality/compliance review", wrong: ["A player skill rating", "A type of save file", "A graphics benchmark"], category: "General" },
+    { q: "What does 'whale' refer to in monetization?", correct: "A player who spends significantly more than average", wrong: ["A large file download", "A powerful game character", "A type of server"], category: "General" },
+    { q: "What is 'post-mortem' in game development?", correct: "A retrospective analysis of a completed project", wrong: ["The game's ending cutscene", "A type of save file", "A network protocol"], category: "General" },
+    { q: "What does 'sunsetting a server' typically involve?", correct: "Shutting down online infrastructure for a game", wrong: ["Adding new content", "Improving graphics", "Reducing load times"], category: "General" },
+    { q: "What is 'A/B testing' used for in live games?", correct: "Comparing two variants of a feature with real players", wrong: ["Compressing textures", "Balancing audio channels", "Rendering shadows"], category: "General" },
+    { q: "What does 'GC pause' refer to?", correct: "A pause caused by garbage collection running", wrong: ["A player pausing the game", "A network disconnect", "A save file error"], category: "Programming" },
+    { q: "What is 'memory alignment' used for?", correct: "Optimizing how data is stored for faster CPU access", wrong: ["Balancing multiplayer matches", "Mixing audio channels", "Compressing textures"], category: "Programming" },
+    { q: "What does 'SIMD' stand for?", correct: "Single Instruction, Multiple Data", wrong: ["System Integrated Memory Driver", "Standard Input Multi Device", "Sequential Instance Model Data"], category: "Programming" },
+    { q: "What is 'cache coherency' concerned with?", correct: "Keeping data consistent across CPU caches", wrong: ["Save file backups", "Audio synchronization", "Texture streaming"], category: "Programming" },
+    { q: "What does 'branch prediction' help a CPU do?", correct: "Guess the outcome of conditional code ahead of time", wrong: ["Render 3D models faster only", "Compress audio", "Balance gameplay"], category: "Programming" },
+    { q: "What is a 'race condition'?", correct: "A bug caused by unpredictable timing between concurrent operations", wrong: ["A type of racing game genre", "A save file corruption method", "A rendering artifact"], category: "Programming" },
+    { q: "What does 'rollback netcode' aim to reduce?", correct: "Perceived input lag in fighting/competitive games", wrong: ["Save file size", "Texture memory usage", "Audio latency only"], category: "Programming" },
+    { q: "What is 'data-oriented design' focused on?", correct: "Organizing data layout for cache efficiency and performance", wrong: ["Writing prettier code syntax", "Compressing audio", "Balancing gameplay difficulty"], category: "Programming" },
+    { q: "What does 'hot reloading' let developers do?", correct: "Update code or assets while the game keeps running", wrong: ["Save the game faster", "Compress files at runtime", "Render shadows in real time"], category: "Programming" },
+    { q: "What is 'profiling' used for in development?", correct: "Measuring performance to find bottlenecks", wrong: ["Compressing textures", "Mixing audio tracks", "Balancing multiplayer matches"], category: "Programming" },
+    { q: "What does 'thread safety' ensure?", correct: "Code behaves correctly when accessed by multiple threads", wrong: ["Faster save times only", "Higher texture resolution", "Lower audio latency only"], category: "Programming" },
+    { q: "What is 'deterministic simulation' important for?", correct: "Ensuring identical results across machines, useful for replays/netcode", wrong: ["Improving texture quality only", "Reducing install size", "Increasing frame rate only"], category: "Programming" },
+    { q: "What does 'metagame' shape in competitive design?", correct: "The evolving strategies players favor over time", wrong: ["The save file structure", "The network protocol", "The rendering pipeline"], category: "Design" },
+    { q: "What is 'ludonarrative dissonance'?", correct: "A conflict between a game's story and its gameplay", wrong: ["A type of audio glitch", "A rendering error", "A save file bug"], category: "Design" },
+    { q: "What does 'emergent gameplay' describe?", correct: "Unscripted outcomes arising from system interactions", wrong: ["Pre-scripted cutscenes", "Fixed tutorial sequences", "Save file structures"], category: "Design" },
+    { q: "What is 'power fantasy' in game design?", correct: "Making players feel powerful and capable", wrong: ["A type of save file", "A rendering technique", "A network setting"], category: "Design" },
+    { q: "What does 'onboarding funnel' track?", correct: "How new players progress through early game stages", wrong: ["Server bandwidth usage", "Texture memory usage", "Save file size"], category: "Design" },
+    { q: "What is 'moment-to-moment gameplay'?", correct: "The immediate, second-by-second player experience", wrong: ["The overall marketing plan", "The save file format", "The network architecture"], category: "Design" },
+    { q: "What does 'design pillar' mean?", correct: "A core principle guiding a game's design decisions", wrong: ["A type of save file", "A rendering technique", "A network protocol"], category: "Design" },
+    { q: "What is 'anti-frustration design'?", correct: "Features that reduce unnecessary player frustration", wrong: ["A save file backup system", "A network optimization", "A rendering technique"], category: "Design" },
+    { q: "What does 'cognitive load' refer to in UI design?", correct: "The mental effort required to process information", wrong: ["The game's file size", "The frame rate", "The network latency"], category: "Design" },
+    { q: "What is a 'skill floor and ceiling'?", correct: "The range from minimum competency to maximum mastery in a game", wrong: ["The save file size range", "The frame rate range", "The network latency range"], category: "Design" },
+    { q: "What does 'systemic emergence' rely on?", correct: "Simple rules interacting to create complex outcomes", wrong: ["Scripted story events only", "Compressed textures", "Save file redundancy"], category: "Design" },
+    { q: "What is 'friction' in game design?", correct: "Deliberate obstacles that slow player progress meaningfully", wrong: ["A rendering artifact", "A network delay", "A save file error"], category: "Design" },
+    { q: "What does 'ambisonics' capture in audio?", correct: "Full 360-degree spatial sound information", wrong: ["Only stereo left-right sound", "Save file metadata", "Network packet data"], category: "Audio" },
+    { q: "What is 'granular synthesis'?", correct: "Creating sound by manipulating tiny audio grains", wrong: ["A save file compression method", "A network protocol", "A rendering technique"], category: "Audio" },
+    { q: "What does 'convolution reverb' use to simulate space?", correct: "Real recorded impulse responses of actual environments", wrong: ["Randomly generated noise only", "Save file data", "Network latency data"], category: "Audio" },
+    { q: "What is 'psychoacoustics' the study of?", correct: "How humans perceive and interpret sound", wrong: ["How speakers are manufactured", "How save files are compressed", "How networks route audio data"], category: "Audio" },
+    { q: "What does 'audio LOD' (level of detail) manage?", correct: "Reducing sound complexity for distant or less important sources", wrong: ["Texture resolution", "Save file size", "Network bandwidth only"], category: "Audio" },
+    { q: "What is 'diegetic sound'?", correct: "Sound that has a source within the game world", wrong: ["Menu music only", "Save file alerts", "Network notification sounds"], category: "Audio" },
+    { q: "What does 'non-diegetic sound' mean?", correct: "Sound the characters in the game world cannot hear, like a score", wrong: ["Sound from an in-game speaker", "Sound from an NPC's voice", "Environmental ambiance only"], category: "Audio" },
+    { q: "What is 'sidechain compression' commonly used for?", correct: "Ducking one sound automatically based on another's level", wrong: ["Increasing overall volume", "Deleting quiet sounds", "Rendering visual effects"], category: "Audio" },
+    { q: "What does 'audio occlusion vs obstruction' distinguish?", correct: "Fully blocked sound versus partially blocked sound paths", wrong: ["Loud versus quiet sound", "Save file types", "Network packet types"], category: "Audio" },
+    { q: "What is a 'DSP' in audio?", correct: "Digital Signal Processor, used to process sound in real time", wrong: ["Data Save Protocol", "Design Style Pattern", "Dynamic Sprite Pipeline"], category: "Audio" },
+    { q: "What does 'wavetable synthesis' generate sound from?", correct: "Stored waveform data cycled to produce tones", wrong: ["Live microphone input only", "Save file compression", "Network audio streaming"], category: "Audio" },
+    { q: "What is 'audio culling' used for in games?", correct: "Skipping processing of sounds too far or irrelevant to hear", wrong: ["Compressing textures", "Balancing multiplayer matches", "Rendering shadows"], category: "Audio" },
+    { q: "What does 'HRTF' stand for in spatial audio?", correct: "Head-Related Transfer Function", wrong: ["High Range Tone Filter", "Horizontal Resonance Tracking Format", "Hybrid Rendering Tone Function"], category: "Audio" },
+    { q: "What is Wwise commonly used for?", correct: "A middleware tool for interactive game audio", wrong: ["A 3D modeling program", "A version control system", "A physics engine"], category: "Audio" },
+    { q: "What does 'dynamic range' mean in audio?", correct: "The difference between the quietest and loudest sounds", wrong: ["The number of audio channels", "The file format used", "The playback speed"], category: "Audio" },
+    { q: "What is 'procedural audio'?", correct: "Sound generated algorithmically in real time", wrong: ["Pre-recorded voice lines only", "Background music loops only", "Compressed sound effects"], category: "Audio" },
+    { q: "What does 'audio ducking' do?", correct: "Lowers one sound's volume to make another more audible", wrong: ["Increases overall game volume", "Deletes unused sound files", "Speeds up dialogue playback"], category: "Audio" },
+    { q: "What is 'reverb' used to simulate?", correct: "How sound reflects off surfaces in a space", wrong: ["Network latency", "Frame rate drops", "Texture resolution"], category: "Audio" },
+  ]
+};
+
+const CATEGORIES = ["Programming", "Design", "Audio", "General"];
+const usedQuestions = { 1: new Set(), 2: new Set(), 3: new Set() };
+
+function generateQuestion(playerPos, category){
+  const level = playerPos < 30 ? 1 : playerPos < 70 ? 2 : 3;
+  const fullPool = questionBank[level];
+  let candidates = fullPool
+    .map((item, i) => ({ item, i }))
+    .filter(({item}) => !category || category === "Any" || item.category === category);
+
+  // fallback: if the chosen category has no questions at this level, use the full pool
+  if (candidates.length === 0){
+    candidates = fullPool.map((item, i) => ({ item, i }));
+  }
+
+  // avoid repeats until every candidate index has been used, then reset
+  const candidateIndices = candidates.map(c => c.i);
+  const allUsed = candidateIndices.every(i => usedQuestions[level].has(i));
+  if (allUsed) usedQuestions[level].clear();
+
+  let pick;
+  do {
+    pick = candidates[rand(0, candidates.length - 1)];
+  } while (usedQuestions[level].has(pick.i));
+  usedQuestions[level].add(pick.i);
+
+  const item = pick.item;
+  const move = rand(1,6);
+  return { text: item.q, answer: item.correct, wrongAnswers: item.wrong, move, category: item.category };
+}
+
+function rand(min, max){
+  return Math.floor(Math.random()*(max-min+1))+min;
+}
+
+function buildChoices(correctAnswer, wrongAnswers){
+  return shuffle([correctAnswer, ...wrongAnswers]);
+}
+function shuffle(arr){
+  for (let i = arr.length-1; i>0; i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+let currentQuestion = null;
+
+const TIME_LIMIT = 10; // seconds
+const timerText = document.getElementById('timerText');
+const timerFill = document.getElementById('timerFill');
+let timerInterval = null;
+
+function startTimer(limitOverride){
+  clearInterval(timerInterval);
+  const effectiveLimit = limitOverride || TIME_LIMIT;
+  let remaining = effectiveLimit;
+  timerText.textContent = remaining.toFixed(1) + 's';
+  timerFill.style.width = '100%';
+  timerText.classList.remove('urgent');
+  timerFill.classList.remove('urgent');
+
+  const tickMs = 100;
+  timerInterval = setInterval(() => {
+    remaining -= tickMs/1000;
+    if (remaining <= 0){
+      remaining = 0;
+      clearInterval(timerInterval);
+      timerText.textContent = '0.0s';
+      timerFill.style.width = '0%';
+      handleTimeout();
+      return;
+    }
+    const pct = (remaining / effectiveLimit) * 100;
+    timerFill.style.width = pct + '%';
+    timerText.textContent = remaining.toFixed(1) + 's';
+    if (remaining <= effectiveLimit * 0.4){
+      timerText.classList.add('urgent');
+      timerFill.classList.add('urgent');
+    }
+  }, tickMs);
+}
+
+function stopTimer(){
+  clearInterval(timerInterval);
+  timerInterval = null;
+}
+
+function handleTimeout(){
+  SoundFX.wrong();
+  document.querySelectorAll('.choiceBtn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === currentQuestion.answer) b.classList.add('correct');
+  });
+  setTimeout(() => {
+    quizBox.style.display = 'none';
+    startRoundBtn.style.display = 'block';
+    messageEl.textContent = `${names[state.current]} ran out of time! (correct: "${currentQuestion.answer}"). Turn passes!`;
+    endTurn();
+  }, 1200);
+}
+
+const categoryBox = document.getElementById('categoryBox');
+const categoryGrid = document.getElementById('categoryGrid');
+const quizCategoryLabel = document.getElementById('quizCategoryLabel');
+
+const categoryIcons = { Programming: "💻", Design: "🎨", Audio: "🔊", General: "🎮" };
+
+function showCategoryChoices(){
+  if (state.gameOver) return;
+  categoryGrid.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'categoryBtn';
+    btn.textContent = `${categoryIcons[cat] || ''} ${cat}`;
+    btn.addEventListener('click', () => {
+      categoryBox.style.display = 'none';
+      newQuestion(cat);
+    });
+    categoryGrid.appendChild(btn);
+  });
+  categoryBox.style.display = 'block';
+  startRoundBtn.style.display = 'none';
+  messageEl.textContent = `${names[state.current]}, pick a category!`;
+}
+
+function newQuestion(category){
+  if (state.gameOver) return;
+  const idx = state.current;
+  currentQuestion = generateQuestion(state.positions[idx], category);
+  questionEl.textContent = currentQuestion.text;
+  quizReward.textContent = `worth ${currentQuestion.move} ${currentQuestion.move===1?'square':'squares'}`;
+  quizCategoryLabel.textContent = `${categoryIcons[currentQuestion.category] || ''} ${currentQuestion.category}`;
+  choicesEl.innerHTML = '';
+  const options = buildChoices(currentQuestion.answer, currentQuestion.wrongAnswers);
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'choiceBtn';
+    btn.textContent = opt;
+    btn.addEventListener('click', () => handleAnswer(opt, btn));
+    choicesEl.appendChild(btn);
+  });
+  quizBox.style.display = 'block';
+  startRoundBtn.style.display = 'none';
+
+  messageEl.textContent = `${names[idx]}, answer within ${TIME_LIMIT} seconds!`;
+  startTimer(TIME_LIMIT);
+}
+
+function handleAnswer(selected, btnEl){
+  stopTimer();
+  document.querySelectorAll('.choiceBtn').forEach(b => b.disabled = true);
+  const correct = selected === currentQuestion.answer;
+  if (correct){
+    btnEl.classList.add('correct');
+    SoundFX.correct();
+  } else {
+    btnEl.classList.add('wrong');
+    document.querySelectorAll('.choiceBtn').forEach(b => {
+      if (b.textContent === currentQuestion.answer) b.classList.add('correct');
+    });
+    SoundFX.wrong();
+  }
+
+  setTimeout(() => {
+    quizBox.style.display = 'none';
+    startRoundBtn.style.display = 'block';
+    if (correct){
+      handleMove(currentQuestion.move);
+    } else {
+      messageEl.textContent = `${names[state.current]} answered wrong (correct: "${currentQuestion.answer}"). Turn passes!`;
+      endTurn();
+    }
+  }, 1400);
+}
+
+startRoundBtn.addEventListener('click', showCategoryChoices);
+
+function animateSteps(playerIdx, steps, finalTarget, cb){
+  let pos = state.positions[playerIdx];
+  const el = playerIdx===0 ? token1 : token2;
+  const offX = playerIdx===0 ? -6 : 6;
+  let count = 0;
+  function step(){
+    if (count < steps){
+      pos++;
+      placeToken(el, pos, offX, 6);
+      count++;
+      setTimeout(step, 180);
+    } else {
+      cb();
+    }
+  }
+  step();
+}
+
+function handleMove(move){
+  const idx = state.current;
+  const start = state.positions[idx];
+  let target = start + move;
+
+  if (target > 100){
+    messageEl.textContent = `${names[idx]} answered correctly but overshoots square 100. Turn passes!`;
+    endTurn();
+    return;
+  }
+
+  const steps = target - start;
+  animateSteps(idx, steps, target, () => {
+    state.positions[idx] = target;
+    let finalMsg = `${names[idx]} answered correctly and moved to square ${target}.`;
+
+    if (target === 100){
+      finalMsg = `${names[idx]} answered correctly and reached square 100!`;
+      messageEl.textContent = finalMsg;
+      declareWinner(idx);
+      return;
+    }
+
+    if (ladders[target]){
+      const dest = ladders[target];
+      SoundFX.ladder();
+      setTimeout(()=>{
+        state.positions[idx] = dest;
+        const el = idx===0?token1:token2;
+        placeToken(el, dest, idx===0?-6:6, 6);
+        messageEl.textContent = `${finalMsg} A ladder boosts ${names[idx]} up to square ${dest}!`;
+        endTurn();
+      }, 300);
+      return;
+    }
+
+    if (snakes[target]){
+      const dest = snakes[target];
+      SoundFX.snake();
+      setTimeout(()=>{
+        state.positions[idx] = dest;
+        const el = idx===0?token1:token2;
+        placeToken(el, dest, idx===0?-6:6, 6);
+        messageEl.textContent = `${finalMsg} Oh no, a snake bites ${names[idx]} down to square ${dest}!`;
+        endTurn();
+      }, 300);
+      return;
+    }
+
+    messageEl.textContent = finalMsg;
+    endTurn();
+  });
+}
+
+function endTurn(){
+  if (state.gameOver) return;
+  state.current = 1 - state.current;
+  updateTurnUI();
+}
+
+function declareWinner(idx){
+  stopTimer();
+  SoundFX.victory();
+  state.gameOver = true;
+  startRoundBtn.disabled = true;
+  quizBox.style.display = 'none';
+  categoryBox.style.display = 'none';
+  startRoundBtn.style.display = 'block';
+  winnerBanner.style.display = 'block';
+  winnerBanner.textContent = `🏆 ${names[idx]} wins the game!`;
+  scores[idx]++;
+  saveScores();
+  updateScoreUI();
+}
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  stopTimer();
+  state.positions = [0,0];
+  state.current = 0;
+  state.gameOver = false;
+  winnerBanner.style.display = 'none';
+  winnerBanner.textContent = '';
+  messageEl.textContent = 'Answer correctly to move forward. Wrong answer, and you stay put! First to square 100 wins.';
+  placeToken(token1, 0, -6, 6);
+  placeToken(token2, 0, 6, 6);
+  startRoundBtn.disabled = false;
+  quizBox.style.display = 'none';
+  categoryBox.style.display = 'none';
+  startRoundBtn.style.display = 'block';
+  updateTurnUI();
+});
+
+document.getElementById('resetScoresBtn').addEventListener('click', () => {
+  scores = [0, 0];
+  saveScores();
+  updateScoreUI();
+});
+
+const muteBtn = document.getElementById('muteBtn');
+muteBtn.addEventListener('click', () => {
+  const nowMuted = !SoundFX.isMuted();
+  SoundFX.setMuted(nowMuted);
+  muteBtn.textContent = nowMuted ? '🔇 Sound Off' : '🔊 Sound On';
+});
+
+updateTurnUI();
+</script>
+</body>
+</html>
