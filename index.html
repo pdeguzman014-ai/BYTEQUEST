@@ -63,6 +63,11 @@ button{font-family:inherit;cursor:pointer}
 .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
 #winner{display:none;text-align:center;font-weight:700;color:#2E4A22;padding:10px;background:#D6E8BE;border-radius:6px;margin-top:10px}
 .snake-belly{animation:slither 1.1s linear infinite}@keyframes slither{to{stroke-dashoffset:-16}}
+.nameRow{display:flex;gap:6px;margin-bottom:12px}.nameRow input{width:100%;min-width:0;padding:6px 8px;border:1px solid #B9CE9C;border-radius:6px;font-family:inherit;font-size:13px}
+#startBtn{display:none!important} /* category choices now appear automatically */
+#beginBtn{background:linear-gradient(180deg,#7FA650,#4C7A32);color:#fff;border:none;font-weight:700;margin:0 0 12px;padding:10px;font-size:14px}
+#beginBtn:hover{background:linear-gradient(180deg,#8DB65C,#56873A)}
+.nameRow input:disabled{background:#E9EEDC;color:#555}
 </style>
 </head>
 <body>
@@ -73,11 +78,14 @@ button{font-family:inherit;cursor:pointer}
   </div>
   <div class="panel">
     <div class="card score">
-      <div><div>Player 1</div><b id="s1" style="color:var(--p1)">0</b></div>
+      <div><div id="n1">Player 1</div><b id="s1" style="color:var(--p1)">0</b></div>
       <div style="font-size:11px;color:#93A87C">WINS</div>
-      <div><div>Player 2</div><b id="s2" style="color:var(--p2)">0</b></div>
+      <div><div id="n2">Player 2</div><b id="s2" style="color:var(--p2)">0</b></div>
     </div>
     <div class="card">
+      <div class="lbl">Player names</div>
+      <div class="nameRow"><input id="name1" maxlength="12" placeholder="Player 1"><input id="name2" maxlength="12" placeholder="Player 2"></div>
+      <button class="ghost" id="beginBtn">▶ Start Game</button>
       <div class="lbl">Current turn</div>
       <div class="turn-name"><span class="dot p1" id="turnDot"></span><span id="turnName">Player 1</span></div>
       <button id="startBtn">Choose Category</button>
@@ -200,6 +208,11 @@ function genQ(pos,cat){
 
 // ---- Game flow ----
 const names=['Player 1','Player 2'];let cq=null,timer=null;
+['name1','name2'].forEach((id,i)=>$(id).addEventListener('input',e=>{names[i]=e.target.value.trim()||'Player '+(i+1);$('n'+(i+1)).textContent=names[i];updTurn()}));
+function setStartUI(on){$('beginBtn').style.display=on?'none':'block';$('name1').disabled=on;$('name2').disabled=on}
+function beginGame(){if(state.started||state.over)return;state.started=true;setStartUI(true);showCats()}
+$('beginBtn').onclick=beginGame;
+['name1','name2'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter')beginGame()}));
 const updTurn=()=>{$('turnName').textContent=names[state.cur];$('turnDot').className='dot p'+(state.cur+1)};
 const msg=t=>$('message').textContent=t;
 function stopTimer(){clearInterval(timer);timer=null}
@@ -216,11 +229,11 @@ function timeout(){
   document.querySelectorAll('.choiceBtn').forEach(b=>{b.disabled=true;if(b.textContent===cq.correct)b.classList.add('correct')});
   setTimeout(()=>{$('quizBox').style.display='none';$('startBtn').style.display='block';msg(`${names[state.cur]} ran out of time! (correct: "${cq.correct}"). Turn passes!`);endTurn()},1200);
 }
-function showCats(){
-  if(state.over)return;
+function showCats(keepMsg){
+  if(state.over||!state.started)return;
   $('catGrid').innerHTML='';
   CATS.forEach(c=>{const b=document.createElement('button');b.className='catBtn';b.textContent=`${ICON[c]} ${c}`;b.onclick=()=>{$('catBox').style.display='none';newQ(c)};$('catGrid').appendChild(b)});
-  $('catBox').style.display='block';$('startBtn').style.display='none';msg(`${names[state.cur]}, pick a category!`);
+  $('catBox').style.display='block';$('startBtn').style.display='none';if(keepMsg!==true)msg(`${names[state.cur]}, pick a category!`);
 }
 function newQ(cat){
   if(state.over)return;
@@ -255,7 +268,7 @@ function move(m){
     msg(t);endTurn();
   })();
 }
-function endTurn(){if(state.over)return;state.cur=1-state.cur;updTurn()}
+function endTurn(){if(state.over)return;state.cur=1-state.cur;updTurn();showCats(true)}
 function win(i){
   stopTimer();SFX.victory();state.over=true;
   $('startBtn').disabled=true;$('quizBox').style.display='none';$('catBox').style.display='none';$('startBtn').style.display='block';
@@ -266,11 +279,11 @@ $('startBtn').onclick=showCats;
 $('resetBtn').onclick=()=>{
   stopTimer();state.pos=[0,0];state.cur=0;state.over=false;
   $('winner').style.display='none';msg('Answer correctly to move forward. Wrong answer, and you stay put! First to square 100 wins.');
-  place(0,0);place(1,0);$('startBtn').disabled=false;$('quizBox').style.display='none';$('catBox').style.display='none';$('startBtn').style.display='block';updTurn();
+  place(0,0);place(1,0);$('startBtn').disabled=false;$('quizBox').style.display='none';$('catBox').style.display='none';$('startBtn').style.display='block';updTurn();state.started=false;setStartUI(false);msg('Type your names, then press Start Game.');
 };
 $('resetScoresBtn').onclick=()=>{scores=[0,0];saveScores();updScores()};
 $('muteBtn').onclick=()=>{const m=!SFX.isMuted();SFX.setMuted(m);$('muteBtn').textContent=m?'🔇 Sound Off':'🔊 Sound On'};
-updTurn();
+updTurn();msg('Type your names, then press Start Game.');
 
 // ---- Floating background symbols ----
 (function(){
